@@ -5,6 +5,8 @@
 * Team: EHS Botball Team
 * 25 March 2022
 * Purpose: To see red or green and move the servo accordingly.
+* Now it moves forward when not sensing the any objects/poms
+* so it can move toward the poms.
 */
 int main()
 {
@@ -47,6 +49,12 @@ int main()
 	 	}
 	 }
  	 camera_update();
+ 	 while((get_object_count(0) == 0) && (get_object_count(1) == 0))
+     {
+        camera_update();
+        mav(0, 200);
+        mav(1, 200);
+   	 }
   }
  return 0;
 }
