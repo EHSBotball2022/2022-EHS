@@ -1,0 +1,154 @@
+#include <kipr/wombat.h>
+    
+void turn(char turnDirec, int sleepTime, int velocity)
+{
+    set_create_total_angle(0);
+    while (get_create_total_angle() > -1 && turnDirec == 'r')
+    {
+        create_drive_direct(velocity,-1*velocity);
+        msleep(sleepTime);
+    }
+    while (get_create_total_angle() < 1 && turnDirec == 'l')
+    {
+        create_drive_direct(-1*velocity,velocity);
+        msleep(sleepTime);
+    }   
+}
+void move(int distance, char direc, int velocity)
+{
+    set_create_distance(0);
+    while (get_create_distance() > -1*distance && direc=='b')
+        create_drive_direct(-1*velocity,-1*velocity);
+    while (get_create_distance() < distance && direc=='f')
+        create_drive_direct(velocity,velocity);
+}
+int initialTurn=1;
+void to_pole()
+{
+    if(initialTurn==1)
+    {
+        move(680, 'b', 40); 
+    	create_stop();
+        turn('l', 2350, 75);
+        initialTurn=0;
+    }
+    else
+    {
+        move(1090, 'b', 40); 
+    	create_stop();
+        turn('l', 2200, 75);
+    }
+    create_stop();
+    int div, diff, i, pos[2]={1387, 1424};
+    for(i=0; i < 2; i++)
+    {
+        for(div = 1; div < 11; div++)
+        {
+            diff = pos[i] - get_servo_position(i);
+            set_servo_position(i, get_servo_position(i)+(diff*div/10));
+            msleep(150);
+        }
+    }
+    if(initialTurn==1)
+        move(320, 'f', 30);
+    else
+        move(130, 'f', 30);
+    create_stop();
+    msleep(200);
+    set_servo_position(0, 1288);
+    set_servo_position(1, 1540);
+    move(90, 'b', 40);
+    create_stop();
+    turn('r', 2200, 75); // Return to yellow
+    create_stop();
+    move(1100, 'f', 100); 
+    create_stop();
+    move(200, 'b', 100);
+    create_stop();
+    
+    msleep(200);
+}
+void r_reset()
+{
+ 	int i, pos[2] = {680,1050};
+    for(i=0;i<2;i++)
+    {
+        enable_servo(i);
+        set_servo_position(i, pos[i]);
+    }
+}
+#define size 4
+void moveRings()
+{
+    										   			        //  Skipped 			  505,890
+    int alt=-1, div, time=205, i, diff, port_y=0, pos[size][2] = {{720,1060}, {815,777}, {177,888}, {815,777}};
+    enable_servo(0);
+    enable_servo(1);
+    move(time, 'f', 40);
+    create_stop();
+    msleep(500);
+    for(i=1; i<size; i++)
+    {
+        if(i==1)
+            turn('l', 3850, 20);
+        for(div = 1; div < 4; div++)
+        {
+        	diff = pos[i][port_y] - get_servo_position(port_y);
+            set_servo_position(port_y, get_servo_position(port_y)+(diff*div/3));
+            msleep(150);
+        }
+        port_y++;
+        if(port_y==2)
+            port_y=0;
+        for(div = 1; div < 4; div++)
+        {
+        	diff = get_servo_position(port_y) - pos[i][port_y];
+            set_servo_position(port_y, get_servo_position(port_y)-(diff*div/3));
+            msleep(150);
+        }
+        if(i==1)
+            turn('r', 4750, 20);
+        if(alt==1)
+        	move(time, 'f', 40);
+        if(alt==-1)
+       		to_pole();
+    	create_stop();
+        msleep(1000);
+        alt*=-1;
+    }
+    create_stop();
+}
+#define arrSize 2
+void begin()
+{
+    int i, pos[2] = {1080,1054}, ms[arrSize] = {480, 205}, ts[arrSize] = {2200, 2100}, mv[arrSize] = {500, 350};
+    char md[arrSize] = {'b', 'f'}, td[arrSize] = {'r', 'l'};
+    for(i=0;i<3;i++)
+    {
+        enable_servo(i);
+        set_servo_position(i, pos[i]);
+    }
+    for(i=0; i < arrSize; i++)
+    {
+        move(ms[i], md[i], mv[i]);
+        create_stop();
+        msleep(200);
+        turn(td[i], ts[i], 75);
+        create_stop();
+    }
+    
+    msleep(200);
+}
+int main()
+{
+    
+    wait_for_light(0);
+    create_connect();
+    begin();
+    r_reset();
+    msleep(1500);
+    moveRings();
+    create_disconnect();
+    return 0;
+}
+
